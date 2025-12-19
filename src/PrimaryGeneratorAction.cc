@@ -12,14 +12,14 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
     fParticleGun = new G4ParticleGun(n_particle);
 
     G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-    G4ParticleDefinition* particle = particleTable->FindParticle("pi0");
+    G4ParticleDefinition* particle = particleTable->FindParticle("e-");
     fParticleGun->SetParticleDefinition(particle);
 
-    fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., -10.*cm));
+    fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., 0.*cm));
 
     fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
 
-    fParticleGun->SetParticleEnergy(20.*GeV);
+    fParticleGun->SetParticleEnergy(1.*MeV);
 }
 
 PrimaryGeneratorAction::~PrimaryGeneratorAction()
@@ -30,7 +30,7 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction()
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 {
     G4cout << "Генерация электрона с энергией: "
-           << fParticleGun->GetParticleEnergy() / GeV << " GeV"
+           << fParticleGun->GetParticleEnergy() / MeV << " MeV"
            << G4endl;
 
     fParticleGun->GeneratePrimaryVertex(anEvent);

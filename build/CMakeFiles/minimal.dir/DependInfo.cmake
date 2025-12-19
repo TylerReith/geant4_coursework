@@ -14,6 +14,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/root/geant4/project_coursework/src/PrimaryGeneratorAction.cc" "CMakeFiles/minimal.dir/src/PrimaryGeneratorAction.cc.o" "gcc" "CMakeFiles/minimal.dir/src/PrimaryGeneratorAction.cc.o.d"
   "/root/geant4/project_coursework/src/RunAction.cc" "CMakeFiles/minimal.dir/src/RunAction.cc.o" "gcc" "CMakeFiles/minimal.dir/src/RunAction.cc.o.d"
   "/root/geant4/project_coursework/src/SensitiveDetector.cc" "CMakeFiles/minimal.dir/src/SensitiveDetector.cc.o" "gcc" "CMakeFiles/minimal.dir/src/SensitiveDetector.cc.o.d"
+  "/root/geant4/project_coursework/src/SteppingAction.cc" "CMakeFiles/minimal.dir/src/SteppingAction.cc.o" "gcc" "CMakeFiles/minimal.dir/src/SteppingAction.cc.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

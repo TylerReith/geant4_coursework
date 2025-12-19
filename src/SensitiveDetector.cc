@@ -18,12 +18,13 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory* /*histor
     G4Track* track = step->GetTrack();
 
     // Дебаг: информация о треке
-    std::cout << GetName() <<" [SD] Track ID: " << track->GetTrackID()
+    /*std::cout << GetName() <<" [SD] Track ID: " << track->GetTrackID()
               << ", Particle: " << track->GetDefinition()->GetParticleName()
               << ", Energy: " << track->GetTotalEnergy()/eV << " eV"
-              << ", Position: " << track->GetPosition() << G4endl;
+              << ", Position: " << track->GetPosition() << G4endl;*/
 
     // Проверяем, что это оптический фотон
+    //std::cout << GetName() << "[SD] works: "<< track->GetDefinition()->GetParticleType() << G4endl;
     if(track->GetDefinition()->GetParticleType() != "opticalphoton") {
         return false;
     }
@@ -32,11 +33,11 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step, G4TouchableHistory* /*histor
     G4double wavelength_nm = 1239.84193 / (track->GetTotalEnergy() / eV); // энергия в eV -> длина волны в nm
 
 
-    std::cout << "[SD] Optical photon wavelength: " << wavelength_nm << " nm" << G4endl;
+    std::cout << GetName() << "[SD] Optical photon wavelength: " << wavelength_nm << " nm" << G4endl;
 
     // Квантовая эффективность (QE)
     G4double qe = GetQE(wavelength_nm);
-    std::cout << "[SD] QE = " << qe << G4endl;
+    //std::cout << "[SD] QE = " << qe << G4endl;
 
     // Случайное срабатывание фотокатода
     if(G4UniformRand() < qe) {

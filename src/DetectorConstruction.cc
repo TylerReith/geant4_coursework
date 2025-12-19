@@ -60,7 +60,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     StainlessSteel->AddElement(Fe, 70*perCent);
     StainlessSteel->AddElement(Cr, 20*perCent);
     StainlessSteel->AddElement(Ni, 10*perCent);
-
+    
     // --- Оптические свойства (wavelengths in eV or nm) ---
     // Use wavelength array (nm) and convert to energy if you prefer; Geant4 expects keys vs photon energy (eV).
     const int nEntries = 3;
@@ -165,92 +165,167 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     scintVis->SetVisibility(true);
     scint_log->SetVisAttributes(scintVis);
 
-    auto scintSD = new SensitiveDetector("ScintillatorSD");
-    G4SDManager::GetSDMpointer()->AddNewDetector(scintSD);
-    scint_log->SetSensitiveDetector(scintSD);
+    //auto scintSD = new SensitiveDetector("ScintillatorSD");
+    //G4SDManager::GetSDMpointer()->AddNewDetector(scintSD);
+    //scint_log->SetSensitiveDetector(scintSD);
 
     new G4PVPlacement(0, G4ThreeVector(), scint_log, "scint_phys", vessel_log, false, 0);
 
     struct PMTCoord {
-    G4ThreeVector pos;
-    G4ThreeVector normal; // направлен в центр
-};
+        G4ThreeVector pos;
+        G4ThreeVector normal; // направлен в центр
+    };
 
-std::vector<PMTCoord> pmt_positions;
+    std::vector<PMTCoord> pmt_positions;
+    std::cout << "before opening" << std::endl;
 
-// Чтение CSV: x_mm,y_mm,z_mm,nx,ny,nz
-std::ifstream infile("geodesic_freq4_coords.csv");
-std::string line;
-bool header_skipped = false;
-while (std::getline(infile, line)) {
-    if (!header_skipped) { header_skipped = true; continue; }
-    std::istringstream ss(line);
-    std::string token;
-    double vals[6];
-    int i=0;
-    while (std::getline(ss, token, ',') && i<6) vals[i++] = std::stod(token);
+    // Чтение CSV: x_mm,y_mm,z_mm,nx,ny,nz
+    std::ifstream infile("../src/geodesic_freq4_coords.csv");
+    std::string line;
+    bool header_skipped = false;
+    while (std::getline(infile, line)) {
+        std::cout << line << std::endl;
+        if (!header_skipped) { header_skipped = true; continue; }
+        std::istringstream ss(line);
+        std::string token;
+        double vals[6];
+        int i=0;
+        while (std::getline(ss, token, ',') && i<6) vals[i++] = std::stod(token);
 
-    PMTCoord coord;
-    coord.pos = G4ThreeVector(vals[0]*mm, vals[1]*mm, vals[2]*mm);
-    coord.normal = G4ThreeVector(vals[3], vals[4], vals[5]);
-    pmt_positions.push_back(coord);
-}
-
-// Тонкая оптическая оболочка фотокатода
-G4double pmt_radius = 95.0*mm;
-G4double photocathode_thickness = 1.0*mm;
-
-G4Sphere* photocathode_solid = new G4Sphere("Photocathode",
-                                            pmt_radius - photocathode_thickness,
-                                            pmt_radius,
-                                            0, 360*deg, 0, 180*deg);
-
-G4LogicalVolume* photocathode_log =
-    new G4LogicalVolume(photocathode_solid,
-                        nist->FindOrBuildMaterial("G4_AIR"),
-                        "photocathode_log");
-
-// SD для генерации п.э.
-auto pmtSD = new SensitiveDetector("PMT_SD");
-G4SDManager::GetSDMpointer()->AddNewDetector(pmtSD);
-photocathode_log->SetSensitiveDetector(pmtSD);
-
-// Оптическая поверхность с QE
-G4OpticalSurface* pmtSurface = new G4OpticalSurface("PMT_Surface");
-pmtSurface->SetType(dielectric_dielectric);
-pmtSurface->SetFinish(polished);
-pmtSurface->SetModel(glisur);
-
-G4MaterialPropertiesTable* mpt = new G4MaterialPropertiesTable();
-G4double photonE[2] = {2.0*eV, 3.5*eV};
-G4double qe[2]      = {0.28, 0.28}; // 28% QE
-mpt->AddProperty("EFFICIENCY", photonE, qe, 2);
-pmtSurface->SetMaterialPropertiesTable(mpt);
-
-new G4LogicalSkinSurface("PMT_Surface", photocathode_log, pmtSurface);
-
-// Размещение всех ФЭУ
-for (size_t i=0; i<pmt_positions.size(); ++i) {
-    G4ThreeVector localZ(0,0,1);
-    G4ThreeVector targetDir = -pmt_positions[i].normal;
-    targetDir = targetDir.unit();
-
-    G4RotationMatrix* rot = new G4RotationMatrix();
-    if (localZ.cross(targetDir).mag() > 1e-6) {
-        G4double angle = std::acos(localZ.dot(targetDir));
-        G4ThreeVector axis = localZ.cross(targetDir).unit();
-        rot->rotate(angle, axis);
+        PMTCoord coord;
+        coord.pos = G4ThreeVector(vals[0]*mm, vals[1]*mm, vals[2]*mm);
+        coord.normal = G4ThreeVector(vals[3], vals[4], vals[5]);
+        pmt_positions.push_back(coord);
+        
     }
 
-    new G4PVPlacement(rot,
-                      pmt_positions[i].pos,
-                      photocathode_log,
-                      "PMT_phys_" + std::to_string(i),
-                      lab_log,
-                      true,
-                      i);
-}
+    // Материал фотокатода для визуализации (непрозрачный)
+    G4Material* photocathode_mat = nist->FindOrBuildMaterial("G4_Al"); // алюминий
 
+    // Форма ФЭУ
+    G4double pmt_radius = 131.0*mm;
+    G4double photocathode_thickness = 1.0*mm;
+
+    G4Sphere* photocathode_solid = new G4Sphere("Photocathode",
+                                                pmt_radius - photocathode_thickness,
+                                                pmt_radius,
+                                                0, 360*deg, 0, 20*deg);
+
+    G4LogicalVolume* photocathode_log =
+        new G4LogicalVolume(photocathode_solid,
+                            photocathode_mat,
+                            "photocathode_log");
+
+    // Чувствительный детектор для генерации п.э.
+    auto pmtSD = new SensitiveDetector("PMT_SD");
+    G4SDManager::GetSDMpointer()->AddNewDetector(pmtSD);
+    photocathode_log->SetSensitiveDetector(pmtSD);
+
+    // Визуальные атрибуты (ярко-красный, полностью непрозрачный)
+    G4VisAttributes* pmtVis = new G4VisAttributes(G4Colour(1.0, 0.0, 0.0, 1.0));
+    pmtVis->SetVisibility(true);
+    photocathode_log->SetVisAttributes(pmtVis);
+    /*
+    // Оптическая поверхность с QE
+    G4OpticalSurface* pmtSurface = new G4OpticalSurface("PMT_Surface");
+    pmtSurface->SetType(dielectric_dielectric);
+    pmtSurface->SetFinish(polished);
+    pmtSurface->SetModel(glisur);
+
+    G4MaterialPropertiesTable* mpt = new G4MaterialPropertiesTable();
+    G4double photonE[2] = {2.0*eV, 3.5*eV};
+    G4double qe[2]      = {0.28, 0.28};
+    mpt->AddProperty("EFFICIENCY", photonE, qe, 2);
+    pmtSurface->SetMaterialPropertiesTable(mpt);
+
+    new G4LogicalSkinSurface("PMT_Surface", photocathode_log, pmtSurface);*/
+
+    
+    
+    for (size_t i = 0; i < pmt_positions.size(); ++i)
+    {
+        G4ThreeVector targetDir = -pmt_positions[i].pos.unit(); // направление локального Z
+
+
+
+        G4ThreeVector ref(0,0,1);           // глобальная ось z
+        targetDir = targetDir.unit();    // нормализация
+
+        // Локальная ось Z должна быть вдоль targetDir
+        G4RotationMatrix* rot = new G4RotationMatrix();
+
+        G4ThreeVector zAxis(0,0,1); // глобальная ось Z
+        G4ThreeVector axis = targetDir.cross(zAxis);
+        G4double cosTheta = targetDir.dot(zAxis);
+        G4double theta = std::acos(cosTheta);
+
+        // Проверка коллинеарности
+        if (theta < 1e-6) {
+            // targetDir ≈ (0,0,1), идентичная матрица
+            rot->rotate(0, G4ThreeVector(1,0,0));
+        } else if (std::abs(theta - CLHEP::pi) < 1e-6) {
+            // targetDir ≈ (0,0,-1), поворот на 180° вокруг любой оси X
+            rot->rotate(CLHEP::pi, G4ThreeVector(1,0,0));
+        } else {
+            rot->rotate(theta, axis.unit());
+        }
+
+
+
+        auto identity = new G4RotationMatrix();
+
+        G4ThreeVector newLocalZ = (*rot).inverse() * ref;
+        G4ThreeVector nref = (*rot) * targetDir;
+        
+
+        G4cout << "PMT " << i 
+            << "pmt pos:" << pmt_positions[i].pos
+            << " targetDir: " << targetDir 
+            << " newLocalZ: " << newLocalZ 
+            << " dot: " << newLocalZ.dot(targetDir) 
+            << " ref: " << nref  // должен быть (0,0,1)
+            << G4endl;
+        
+
+        new G4PVPlacement(rot,
+                        pmt_positions[i].pos,
+                        photocathode_log,
+                        "PMT_phys_" + std::to_string(i),
+                        lab_log,
+                        false,
+                        i);
+    }
+
+    /*for (size_t i = 0; i < pmt_positions.size(); ++i)
+    {
+        // --- Ротация временно отключена ---
+        G4RotationMatrix* rot = nullptr;
+
+        // --- Проверка ориентации локальной оси (для дебага можно оставить) ---
+        G4ThreeVector localZ(0,0,1);
+        G4ThreeVector newLocalZ = localZ;  // локальная ось не меняется
+        G4ThreeVector targetDir = -pmt_positions[i].normal.unit();
+        G4cout << "PMT " << i 
+            << " targetDir: " << targetDir 
+            << " newLocalZ (no rotation): " << newLocalZ 
+            << " dot: " << newLocalZ.dot(targetDir) 
+            << G4endl;
+
+        new G4PVPlacement(rot,
+                        pmt_positions[i].pos,
+                        photocathode_log,
+                        "PMT_phys_" + std::to_string(i),
+                        lab_log,
+                        false,
+                        i);
+    }*/
+
+
+
+
+
+
+    
 
 
     //--------------------------------------- Return -------------------------------------------------

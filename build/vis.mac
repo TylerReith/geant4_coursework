@@ -1,15 +1,10 @@
 # Create an OpenGL view and draw geometry
-/vis/open OGLI
+/vis/open OGLSQt
 /vis/drawVolume
+
+# Add global coordinate axes
+/vis/scene/add/axes 0 0 0 10 cm
 
 # Draw smooth trajectories at end of event
 /vis/scene/add/trajectories smooth
-# Источник частиц: гамма из центра сцинтиллятора
-/gun/particle gamma
-/gun/energy 1 MeV
-/gun/position 0 0 0 mm
-/gun/direction 0 0 1
-
-# Включаем генерацию событий
-/run/initialize
-/run/beamOn 10
+/vis/viewer/flush

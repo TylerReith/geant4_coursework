@@ -11,6 +11,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/minimal.dir/src/RunAction.cc.o.d"
   "CMakeFiles/minimal.dir/src/SensitiveDetector.cc.o"
   "CMakeFiles/minimal.dir/src/SensitiveDetector.cc.o.d"
+  "CMakeFiles/minimal.dir/src/SteppingAction.cc.o"
+  "CMakeFiles/minimal.dir/src/SteppingAction.cc.o.d"
   "minimal"
   "minimal.pdb"
 )

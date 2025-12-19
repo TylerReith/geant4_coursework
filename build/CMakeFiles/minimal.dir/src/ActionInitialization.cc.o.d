@@ -288,4 +288,7 @@ CMakeFiles/minimal.dir/src/ActionInitialization.cc.o: \
  /usr/include/c++/13/fstream \
  /usr/include/x86_64-linux-gnu/c++/13/bits/basic_file.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++io.h \
- /usr/include/c++/13/bits/fstream.tcc
+ /usr/include/c++/13/bits/fstream.tcc \
+ /root/geant4/project_coursework/include/SteppingAction.hh \
+ /root/geant4/install/include/Geant4/G4UserSteppingAction.hh \
+ /root/geant4/install/include/Geant4/globals.hh
